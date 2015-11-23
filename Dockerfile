@@ -9,7 +9,7 @@ WORKDIR /go/src/github.com/coreos/khealth
 
 RUN godep restore
 
-RUN go install github.com/coreos/khealth/cmd/overlord
+RUN go install github.com/coreos/khealth/cmd/rcscheduler
 
 EXPOSE 8080
 
