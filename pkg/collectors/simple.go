@@ -24,6 +24,11 @@ func NewSimpleCollector(routine *routines.Routine) *SimpleCollector {
 }
 
 func (sc *SimpleCollector) Start() error {
+
+	if err := sc.routine.Start(); err != nil {
+		return err
+	}
+
 	go func() {
 		for {
 			event := <-sc.routine.Events
@@ -35,7 +40,8 @@ func (sc *SimpleCollector) Start() error {
 			}
 		}
 	}()
-	return sc.routine.Start()
+
+	return nil
 }
 
 func (sc *SimpleCollector) Status(w http.ResponseWriter, r *http.Request) {
