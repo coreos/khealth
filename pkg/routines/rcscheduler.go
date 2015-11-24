@@ -44,13 +44,8 @@ func (rcs *RCScheduler) Init() error {
 					RestartPolicy: kapi.RestartPolicyAlways,
 					Containers: []kapi.Container{
 						kapi.Container{
-							Name:  "busybox-clock",
-							Image: "quay.io/aptible/busybox",
-							Command: []string{
-								"/bin/sh",
-								"-c",
-								"while true;do date;sleep 5;done",
-							},
+							Name:  "khealth-canary",
+							Image: "kubernetes/pause:go",
 						},
 					},
 				},
