@@ -28,13 +28,13 @@ type Routine struct {
 	client       *kclient.Client
 	events       chan<- *Event
 	pollInterval time.Duration
-	pollCount    int
+	podTTL       time.Duration
 	handler      RoutineHandler
 }
 
 func NewRoutine(client *kclient.Client,
 	pollInterval time.Duration,
-	pollCount int,
+	podTTL time.Duration,
 	handler RoutineHandler,
 ) *Routine {
 	events := make(chan *Event)
@@ -44,7 +44,7 @@ func NewRoutine(client *kclient.Client,
 		events:       events,
 		client:       client,
 		pollInterval: pollInterval,
-		pollCount:    pollCount,
+		podTTL:       podTTL,
 		handler:      handler,
 	}
 }
@@ -89,7 +89,8 @@ func (r *Routine) routine() {
 		}
 
 		lastPoll := time.Unix(0, 0)
-		for pollCount := 0; (pollCount < r.pollCount || r.pollCount <= 0) && !r.terminated; pollCount++ {
+		podStart := time.Now()
+		for !r.terminated && time.Since(podStart) <= r.podTTL {
 			if time.Since(lastPoll) > r.pollInterval {
 
 				if err := r.handler.Poll(); err != nil {
