@@ -7,6 +7,9 @@ import (
 	kclient "k8s.io/kubernetes/pkg/client/unversioned"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -66,6 +69,23 @@ func main() {
 	if err := collector.Start(); err != nil {
 		log.Fatal(err)
 	}
+	sigc := make(chan os.Signal, 1)
+
+	signal.Notify(sigc,
+		syscall.SIGHUP,
+		syscall.SIGINT,
+		syscall.SIGTERM,
+		syscall.SIGQUIT)
+
+	go func() {
+		_ = <-sigc
+		log.Println("Caught signal: attempting to terminate gracefully")
+		if err := collector.Terminate(); err != nil {
+			log.Fatal(err)
+		}
+		log.Println("Terminated")
+		os.Exit(0)
+	}()
 
 	http.HandleFunc("/health", collector.Status)
 
