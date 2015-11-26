@@ -59,7 +59,7 @@ func main() {
 		time.Duration(podTTL)*time.Second,
 		&routines.RCScheduler{
 			Client:       client,
-			Namespace:    "default",
+			Namespace:    "khealth",
 			ReplicaCount: 3,
 		},
 	)
