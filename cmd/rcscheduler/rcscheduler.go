@@ -27,10 +27,10 @@ func main() {
 	flag.StringVar(&remoteConfig.KeyFile, "remote-tls-key-file", "", "path to tls key file")
 	flag.StringVar(&remoteConfig.CAFile, "remote-tls-ca-file", "", "path to tls certificate authority file")
 
-	var pollInterval, pollCount int
+	var pollInterval, podTTL int
 
-	flag.IntVar(&pollInterval, "poll-interval", 5, "number of seconds between status polls")
-	flag.IntVar(&pollCount, "poll-count", 10, "number of polls before restarting routine")
+	flag.IntVar(&pollInterval, "poll-interval", 5, "number of seconds between kubernetes api status polls")
+	flag.IntVar(&podTTL, "pod-ttl", 120, "number of seconds to leave canary pods running before destroying and re-creating")
 
 	flag.Parse()
 
@@ -56,7 +56,7 @@ func main() {
 	rcScheduler := routines.NewRoutine(
 		client,
 		time.Duration(pollInterval)*time.Second,
-		pollCount,
+		time.Duration(podTTL)*time.Second,
 		&routines.RCScheduler{
 			Client:       client,
 			Namespace:    "default",
