@@ -59,7 +59,7 @@ func main() {
 		pollCount,
 		&routines.RCScheduler{
 			Client:       client,
-			Namespace:    "default",
+			Namespace:    "khealth",
 			ReplicaCount: 3,
 		},
 	)
