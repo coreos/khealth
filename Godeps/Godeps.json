@@ -2,12 +2,16 @@
 	"ImportPath": "_/home/chom/src/coreos/khealth",
 	"GoVersion": "go1.5.1",
 	"Packages": [
-		"github.com/coreos/khealth/cmd/overlord"
+		"github.com/coreos/khealth/cmd/rcscheduler"
 	],
 	"Deps": [
 		{
 			"ImportPath": "github.com/beorn7/perks/quantile",
 			"Rev": "b965b613227fddccbfffe13eae360ed3fa822f8d"
+		},
+		{
+			"ImportPath": "github.com/coreos/pkg/flagutil",
+			"Rev": "2c77715c4df99b5420ffcae14ead08f52104065d"
 		},
 		{
 			"ImportPath": "github.com/davecgh/go-spew/spew",

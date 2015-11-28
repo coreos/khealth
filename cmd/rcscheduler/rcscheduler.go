@@ -4,6 +4,7 @@ import (
 	"flag"
 	"github.com/coreos/khealth/pkg/collectors"
 	"github.com/coreos/khealth/pkg/routines"
+	"github.com/coreos/pkg/flagutil"
 	kclient "k8s.io/kubernetes/pkg/client/unversioned"
 	"log"
 	"net/http"
@@ -17,22 +18,29 @@ func main() {
 	var listenAddr string
 	var clientMode string
 	var remoteConfig kclient.Config
-	flag.StringVar(&listenAddr, "listen", "0.0.0.0:8080", "bind http server to this address")
-	flag.StringVar(&clientMode, "client-mode", "in-cluster", "mode by which this client is configured to talk to the k8s api: one of [ in-cluster, remote-tls, remote-basic-auth ]")
+	fs := flag.NewFlagSet("rcscheduler", flag.ExitOnError)
+	fs.StringVar(&listenAddr, "listen", "0.0.0.0:8080", "bind http server to this address")
+	fs.StringVar(&clientMode, "client-mode", "in-cluster", "mode by which this client is configured to talk to the k8s api: one of [ in-cluster, remote-tls, remote-basic-auth ]")
 
-	flag.StringVar(&remoteConfig.Host, "remote-host", "", "host:port or url of k8s api server")
-	flag.StringVar(&remoteConfig.Username, "remote-username", "", "basic auth username")
-	flag.StringVar(&remoteConfig.Password, "remote-password", "", "basic auth password")
-	flag.StringVar(&remoteConfig.CertFile, "remote-tls-cert-file", "", "path to tls cert file")
-	flag.StringVar(&remoteConfig.KeyFile, "remote-tls-key-file", "", "path to tls key file")
-	flag.StringVar(&remoteConfig.CAFile, "remote-tls-ca-file", "", "path to tls certificate authority file")
+	fs.StringVar(&remoteConfig.Host, "remote-host", "", "host:port or url of k8s api server")
+	fs.StringVar(&remoteConfig.Username, "remote-username", "", "basic auth username")
+	fs.StringVar(&remoteConfig.Password, "remote-password", "", "basic auth password")
+	fs.StringVar(&remoteConfig.CertFile, "remote-tls-cert-file", "", "path to tls cert file")
+	fs.StringVar(&remoteConfig.KeyFile, "remote-tls-key-file", "", "path to tls key file")
+	fs.StringVar(&remoteConfig.CAFile, "remote-tls-ca-file", "", "path to tls certificate authority file")
 
 	var pollInterval, podTTL int
 
-	flag.IntVar(&pollInterval, "poll-interval", 5, "number of seconds between kubernetes api status polls")
-	flag.IntVar(&podTTL, "pod-ttl", 120, "number of seconds to leave canary pods running before destroying and re-creating")
+	fs.IntVar(&pollInterval, "poll-interval", 5, "number of seconds between kubernetes api status polls")
+	fs.IntVar(&podTTL, "pod-ttl", 120, "number of seconds to leave canary pods running before destroying and re-creating")
 
-	flag.Parse()
+	if err := fs.Parse(os.Args[1:]); err != nil {
+		log.Fatal(err)
+	}
+
+	if err := flagutil.SetFlagsFromEnv(fs, "KHEALTH_RCSCHEDULER"); err != nil {
+		log.Fatal(err)
+	}
 
 	var client *kclient.Client
 	var err error
