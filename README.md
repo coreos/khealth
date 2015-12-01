@@ -25,11 +25,11 @@ This will create a nodeport service which exposes the following status endpoints
 
 A khealth *Module* is a single command that invokes a set of Routines and a single Collector. The Collector gathers events from the Routines and exposes metrics on its status endpoint.
 
-* **cmd/**:
+* **`cmd/`**:
 
-  This is where the `Module` entrypoint programs live. Each `Module` should have exactly one `main` package package in an eponymous directory beneath `cmd/`.
+  This is where the `Module` entrypoint programs live. Each `Module` should have exactly one `main` package in an eponymous directory beneath `cmd/`.
 
-* **pkg/routines**:
+* **`pkg/routines`**:
 
   Routines are defined in structures that implement the `RoutineHandler` interface.
   ```go
@@ -39,11 +39,15 @@ A khealth *Module* is a single command that invokes a set of Routines and a sing
 	Cleanup() error
   }
   ```
-  `Init` is called, and then `Poll` in a loop. Once the ttl has expired, `Cleanup` is called. Rinse-repeat. Every step generates an event which is received by the collector.
+  `Init` is called, and then `Poll` in a loop. When the TTL expires, `Poll` terminates, and `Cleanup` is called. Each iteration of this cycle generates events, which are sent to the Collector via the Routine struct's `Events` channel. (More advanced configurations could very well have things other than Collectors reading from a Routine's `Events` channel. This is not "common" though.)
 
-  The `NewRoutine` function can be used to create a new Routine.
-
-* **pkg/collectors**:
+  The `NewRoutine` function takes the following arguments
+  * `client`: the kubernetes api client
+  * `pollInterval`: how often (in seconds) `Poll` is called.
+  * `podTTL`: how many seconds to loop on `Poll` before calling `Cleanup`
+  * `handler`: the `RoutineHandler` for this routine.
+  It returns a pointer a khealth `Routine` struct.
+* **`pkg/collectors`**:
 
   ```go
   type Collector interface {
@@ -52,14 +56,13 @@ A khealth *Module* is a single command that invokes a set of Routines and a sing
 	Terminate() error
   }
   ```
-  Collectors should implement the Collector interface and make use of routines. The pattern for wiring up routines inside a collector implementation is as follows:
+  Collectors must implement the Collector interface and make use of Routines. To wire Routines to a Collector implementation, follow this general pattern:
   * `Start` : Call `Start` on all routines this collector uses. Then begin reading events from each routines' `Events` channel and collating current state.
   * `Status`: Serialize current state to http response.
-  * `Terminate`: Call `SignalTerminate` on each routine.
-      `SignalTerminate` non-blocking, so afterwards you'll want to block until each Routines' `Events` channel has emitted a `nil` value.
+  * `Terminate`: Call `SignalTerminate` on each routine. `SignalTerminate` is non-blocking, so before returning you'll want to block until each Routines' `Events` channel has emitted a `nil` value. That way, when `Terminate` returns you can be assured your Routines have all cleaned up.
 
 ## Modules
-- **cmd/rscheduler**
+- **`cmd/rcscheduler`**
   This module uses a single routine which schedules/unschedules pause pods via a replication controller.
 
   The program exposes a single health endpoint which reports the state of the latest event.
@@ -67,13 +70,13 @@ A khealth *Module* is a single command that invokes a set of Routines and a sing
 ## Roadmap
 - More routines: We want routines that do everything! Test network latency. Write to disk. Compute fibonacci sequences.
 
-* Prometheus integration: Collectors expose prometheus-compatbile status endpoints and metrics. Pre-built infrastructure for aggregating metrics from a dynamic set of canary pods purpose-built to exercise Kubernetes clusters in a specific way.
+* Prometheus integration: Collectors expose Prometheus-compatible status endpoints and metrics, providing readymade infrastructure to aggregate statistics from a set of canary pods, designed specifically to exercise Kubernetes cluster resources.
 
-* Alerting: Use experimental [alertmanager](https://github.com/prometheus/alertmanager) to alert on metrics
+* Alerting: Use the experimental [alertmanager](https://github.com/prometheus/alertmanager) to alert on metrics
 
 ## Who should use this?
 
-* **Cluster administrators**: Gain insight into your kubernetes cluster's performance.  Monitor health endpoints which report on various testing routines.
+* **Cluster administrators**: Gain insight into your Kubernetes cluster's performance.  Monitor health endpoints which report on various testing routines.
 
 * **Kubernetes developers**: A convenient way to "smoke test" a cluster. Feel free to write *Modules* that exist solely to torture test a cluster and have no business running on the same cluster as production assets. And turn the replica count way up!
 
