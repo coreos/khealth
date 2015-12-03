@@ -11,7 +11,8 @@ If you have a kubernetes cluster, you can deploy khealth.
 ```sh
 cd khealth/
 kubectl create -f ./contrib/k8s/khealth-ns.yaml
-kubectl create -f ./contrib/k8s/khealth-{rc,service}.yaml
+kubectl --namespace=khealth create -f ./contrib/k8s/khealth-rc.yaml
+kubectl --namespace=khealth create -f ./contrib/k8s/khealth-service.yaml
 ```
 
 This will create a nodeport service which exposes the following status endpoints.
