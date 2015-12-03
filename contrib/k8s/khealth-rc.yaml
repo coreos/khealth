@@ -19,9 +19,6 @@ spec:
       containers:
           - image: quay.io/coreos/khealth
             name: rcscheduler
-            metadata:
-              labels:
-                module: rcscheduler
             command:
               - "rcscheduler"
             ports:
