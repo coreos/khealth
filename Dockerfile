@@ -1,4 +1,4 @@
-FROM golang:1.5
+FROM golang:1.5.2
 MAINTAINER colin.hom@coreos.com
 
 RUN go get github.com/tools/godep

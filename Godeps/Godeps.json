@@ -1,6 +1,6 @@
 {
-	"ImportPath": "_/home/chom/src/coreos/khealth",
-	"GoVersion": "go1.5.1",
+	"ImportPath": ".",
+	"GoVersion": "go1.5.2",
 	"Packages": [
 		"github.com/coreos/khealth/cmd/overlord"
 	],
